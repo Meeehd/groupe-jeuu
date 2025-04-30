@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>لعبة المجموعات</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; 
+            background-color: #f0f8ff;
+            margin-top: 50px; 
+            color: #333;
+        }
+        .hidden { display: none; }
+        .section { margin: 20px; }
+        h1, h2 { color: #2c3e50; }
+        button { 
+            padding: 10px 20px; 
+            font-size: 18px; 
+            margin-top: 10px; 
+            border-radius: 5px; 
+            background-color: #3498db; 
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        input, textarea { 
+            padding: 10px; 
+            font-size: 18px; 
+            width: 300px; 
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        #timer { font-size: 24px; margin: 20px; }
+        .score-board { font-size: 20px; margin: 20px; color: #16a085; }
+        .question-area, .answer-area { margin: 30px; }
+        .game-container { background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+    </style>
+</head>
+<body>
+
+    <div id="start-section" class="section game-container">
+        <h1>أدخل اسم مجموعتك</h1>
+        <input type="text" id="groupNameInput" placeholder="اسم المجموعة">
+        <br>
+        <button onclick="startGame()">ابدأ</button>
+    </div>
+
+    <div id="game-section" class="section hidden game-container">
+        <h2 id="groupsDisplay"></h2>
+        <div class="score-board" id="scoreBoard"></div>
+
+        <div id="turnInfo"></div>
+
+        <div id="questionSection" class="question-area hidden">
+            <h3>اكتب سؤالا للمجموعة الأخرى:</h3>
+            <textarea id="questionInput" rows="3" placeholder="اكتب سؤالك هنا..."></textarea>
+            <br>
+            <button onclick="sendQuestion()">أرسل السؤال</button>
+        </div>
+
+        <div id="answerSection" class="answer-area hidden">
+            <h3 id="receivedQuestion"></h3>
+            <textarea id="answerInput" rows="2" placeholder="اكتب إجابتك هنا..."></textarea>
+            <br>
+            <button onclick="sendAnswer()">أرسل الجواب</button>
+        </div>
+
+        <div id="timer"></div>
+    </div>
+
+    <script>
+        let groupName = "";
+        let opponentName = "";
+        let currentTurn = 1;
+        let group1 = { name: "", score: 0 };
+        let group2 = { name: "", score: 0 };
+        let timer;
+        let timeLeft = 30; // ثواني لكل سؤال
+
+        function startGame() {
+            groupName = document.getElementById('groupNameInput').value.trim();
+            if (!group1.name) {
+                group1.name = groupName;
+                alert("انتظر المجموعة الثانية لتدخل اسمها...");
+                document.getElementById('groupNameInput').value = "";
+            } else if (!group2.name && groupName !== group1.name) {
+                group2.name = groupName;
+                document.getElementById('start-section').classList.add('hidden');
+                document.getElementById('game-section').classList.remove('hidden');
+                showTurn();
+            } else {
+                alert("اسم المجموعة مستخدم أو خطأ!");
+            }
+        }
+
+        function showTurn() {
+            document.getElementById('groupsDisplay').innerText = `${group1.name} مقابل ${group2.name}`;
+            document.getElementById('scoreBoard').innerText = `${group1.name}: ${group1.score} نقاط - ${group2.name}: ${group2.score} نقاط`;
+
+            if ((currentTurn % 2 === 1 && groupName === group1.name) || (currentTurn % 2 === 0 && groupName === group2.name)) {
+                document.getElementById('turnInfo').innerText = "دورك لطرح سؤال ✍️";
+                document.getElementById('questionSection').classList.remove('hidden');
+                document.getElementById('answerSection').classList.add('hidden');
+                startTimer();
+            } else {
+                document.getElementById('turnInfo').innerText = "انتظر السؤال من المجموعة الأخرى ⏳";
+                document.getElementById('questionSection').classList.add('hidden');
+                document.getElementById('answerSection').classList.add('hidden');
+            }
+        }
+
+        function sendQuestion() {
+            const question = document.getElementById('questionInput').value.trim();
+            if (question) {
+                localStorage.setItem('sentQuestion', question);
+                document.getElementById('questionInput').value = "";
+                alert("تم إرسال السؤال. انتظر الإجابة.");
+                document.getElementById('questionSection').classList.add('hidden');
+                document.getElementById('answerSection').classList.add('hidden');
+                clearInterval(timer);
+            }
+        }
+
+        function checkForQuestion() {
+            setInterval(() => {
+                const question = localStorage.getItem('sentQuestion');
+                if (question && ((currentTurn % 2 === 1 && groupName === group2.name) || (currentTurn % 2 === 0 && groupName === group1.name))) {
+                    document.getElementById('receivedQuestion').innerText = question;
+                    document.getElementById('answerSection').classList.remove('hidden');
+                    localStorage.removeItem('sentQuestion');
+                    startTimer();
+                }
+            }, 1000);
+        }
+
+        function sendAnswer() {
+            const answer = document.getElementById('answerInput').value.trim();
+            if (answer) {
+                const correct = confirm("هل الإجابة صحيحة؟ اضغط موافق إذا نعم، أو إلغاء إذا لا.");
+                if (correct) {
+                    if (currentTurn % 2 === 1) {
+                        group2.score++;
+                    } else {
+                        group1.score++;
+                    }
+                }
+                document.getElementById('answerInput').value = "";
+                currentTurn++;
+                clearInterval(timer);
+                showTurn();
+            }
+        }
+
+        function startTimer() {
+            timeLeft = 30;
+            document.getElementById('timer').innerText = `الوقت المتبقي: ${timeLeft} ثانية`;
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').innerText = `الوقت المتبقي: ${timeLeft} ثانية`;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    alert("انتهى الوقت!");
+                    currentTurn++;
+                    showTurn();
+                }
+            }, 1000);
+        }
+
+        checkForQuestion();
+    </script>
+
+</body>
+</html>
