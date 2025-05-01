@@ -129,7 +129,7 @@
 <script type="module">
 // Firebase config
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.7/firebase-app.js";
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.7/firebase-database.js";
+import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/9.6.7/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyACiOC6qd0OozfYUKeimW2O6BiH709h_aw",
@@ -201,12 +201,6 @@ function sendQuestion() {
   });
   addMessage("📝 أرسلت سؤال: " + q);
   document.getElementById('questionInput').value = '';
-  questionCount++;
-  if (questionCount >= maxQuestions) {
-    endGame();
-  } else {
-    switchTurn();
-  }
 }
 window.sendQuestion = sendQuestion;
 
@@ -225,8 +219,8 @@ function sendAnswer() {
   addMessage("✅ أرسلت إجابة: " + a);
   document.getElementById('answerInput').value = '';
   document.getElementById('answerSection').style.display = 'none';
-  switchTurn();
 }
+window.sendAnswer = sendAnswer;
 
 function addMessage(msg) {
   const messagesDiv = document.getElementById('messages');
@@ -237,11 +231,6 @@ function addMessage(msg) {
 function switchTurn() {
   turn = turn === "group1" ? "group2" : "group1";
   set(ref(db, 'currentTurn'), turn);
-}
-
-function endGame() {
-  document.getElementById('game').style.display = 'none';
-  document.getElementById('endSection').style.display = 'block';
 }
 
 function listenForUpdates() {
@@ -270,8 +259,17 @@ function listenForUpdates() {
   });
 }
 
+// وظيفة لحذف البيانات عند التحديث أو نهاية اللعبة
+function clearDatabase() {
+  remove(ref(db, 'currentTurn'));
+  remove(ref(db, 'currentQuestion'));
+  remove(ref(db, 'currentAnswer'));
+}
+window.clearDatabase = clearDatabase;
+
 function restartGame() {
-  window.location.reload();
+  clearDatabase(); // حذف البيانات من قاعدة البيانات
+  window.location.reload(); // تحديث الصفحة
 }
 </script>
 </body>
