@@ -2,39 +2,82 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>لعبة المجموعات</title>
+<title>🎮 لعبة المجموعات</title>
 <style>
   body {
-    font-family: 'Arial', sans-serif;
-    background: linear-gradient(to right, #00c6ff, #0072ff);
-    color: white;
+    font-family: 'Cairo', sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
     text-align: center;
     padding: 20px;
   }
+
+  h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px #333;
+  }
+
   .card {
-    background: white;
+    background: linear-gradient(135deg, #f6d365, #fda085);
     color: #333;
     padding: 20px;
     border-radius: 15px;
     margin: 10px;
     display: inline-block;
-    width: 150px;
+    width: 180px;
     cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-    transition: transform 0.3s;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    transition: transform 0.3s, box-shadow 0.3s;
   }
   .card:hover {
     transform: scale(1.1);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.4);
   }
-  #game, #questionSection, #answerSection {
+
+  input, button {
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    margin-top: 10px;
+    width: 80%;
+    font-size: 1em;
+  }
+
+  button {
+    background: linear-gradient(135deg, #11998e, #38ef7d);
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  button:hover {
+    background: linear-gradient(135deg, #38ef7d, #11998e);
+  }
+
+  #game, #questionSection, #answerSection, #endSection {
     display: none;
   }
-  input, button {
-    padding: 10px;
-    border-radius: 5px;
-    margin-top: 10px;
+
+  #chat {
+    background: rgba(255,255,255,0.15);
+    padding: 15px;
+    border-radius: 15px;
+    margin-top: 20px;
   }
+
+  #messages {
+    background: #fff;
+    color: #333;
+    padding: 10px;
+    border-radius: 10px;
+    height: 150px;
+    overflow:auto;
+    text-align: right;
+  }
+
 </style>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -72,14 +115,19 @@
 
   <div id="chat">
     <h3>💬 المحادثة</h3>
-    <div id="messages" style="background:white;color:black;padding:10px;border-radius:10px;height:150px;overflow:auto"></div>
+    <div id="messages"></div>
   </div>
+</div>
+
+<div id="endSection">
+  <h2>🎉 لقد أكملتم اللعبة!</h2>
+  <button onclick="restartGame()">🔄 العودة للصفحة الرئيسية</button>
 </div>
 
 <script type="module">
 // Firebase config
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.7/firebase-app.js";
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.7/firebase-database.js";
+import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/9.6.7/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyACiOC6qd0OozfYUKeimW2O6BiH709h_aw",
@@ -97,14 +145,14 @@ const db = getDatabase(app);
 // Variables
 let group = "";
 let groupName = "";
+let questionCount = 0;
+let maxQuestions = 5;
 
-// Fonctions
 function chooseGroup(g) {
   group = g;
   document.getElementById('selectGroup').style.display = 'none';
   document.getElementById('nameInput').style.display = 'block';
 }
-
 window.chooseGroup = chooseGroup;
 
 function submitGroupName() {
@@ -117,15 +165,17 @@ function submitGroupName() {
   document.getElementById('game').style.display = 'block';
   document.getElementById('welcomeText').innerText = "مرحباً " + groupName + " 👋";
 
-  // سجل الاسم في قاعدة البيانات
   set(ref(db, group + '/name'), groupName);
 
   listenForUpdates();
 }
-
 window.submitGroupName = submitGroupName;
 
 function sendQuestion() {
+  if (questionCount >= maxQuestions) {
+    endGame();
+    return;
+  }
   const q = document.getElementById('questionInput').value.trim();
   if (q === "") {
     alert("اكتب السؤال!");
@@ -140,8 +190,8 @@ function sendQuestion() {
   addMessage("📝 أرسلت سؤال: " + q);
   document.getElementById('questionInput').value = '';
   document.getElementById('questionSection').style.display = 'none';
+  questionCount++;
 }
-
 window.sendQuestion = sendQuestion;
 
 function sendAnswer() {
@@ -160,7 +210,6 @@ function sendAnswer() {
   document.getElementById('answerInput').value = '';
   document.getElementById('answerSection').style.display = 'none';
 }
-
 window.sendAnswer = sendAnswer;
 
 function addMessage(msg) {
@@ -172,7 +221,6 @@ function addMessage(msg) {
 function listenForUpdates() {
   const targetGroup = group === "group1" ? "group2" : "group1";
 
-  // استمع للسؤال القادم
   onValue(ref(db, group + '/currentQuestion'), (snapshot) => {
     const data = snapshot.val();
     if (data) {
@@ -180,26 +228,37 @@ function listenForUpdates() {
       document.getElementById('answerSection').style.display = 'block';
       document.getElementById('questionSection').style.display = 'none';
       addMessage("📩 وصلك سؤال: " + data.question);
-      // امسح بعد عرضه
       set(ref(db, group + '/currentQuestion'), null);
     }
   });
 
-  // استمع للإجابة القادمة
   onValue(ref(db, group + '/currentAnswer'), (snapshot) => {
     const data = snapshot.val();
     if (data) {
       addMessage("💡 الإجابة التي وصلكت من " + data.from + ": " + data.answer);
       document.getElementById('questionSection').style.display = 'block';
       document.getElementById('answerSection').style.display = 'none';
-      // امسح بعد عرضها
       set(ref(db, group + '/currentAnswer'), null);
     }
   });
 
-  // في البداية، المجموعة تبدأ بالسؤال
   document.getElementById('questionSection').style.display = 'block';
 }
+
+function endGame() {
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('endSection').style.display = 'block';
+}
+
+function restartGame() {
+  // امسح بيانات اللعبة
+  remove(ref(db, group + '/currentQuestion'));
+  remove(ref(db, group + '/currentAnswer'));
+  remove(ref(db, group + '/name'));
+
+  location.reload();
+}
+window.restartGame = restartGame;
 
 </script>
 
