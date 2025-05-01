@@ -129,7 +129,7 @@
 <script type="module">
 // Firebase config
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.7/firebase-app.js";
-import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/9.6.7/firebase-database.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.7/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyACiOC6qd0OozfYUKeimW2O6BiH709h_aw",
@@ -171,7 +171,6 @@ function submitGroupName() {
   set(ref(db, group + '/name'), groupName);
 
   listenForUpdates();
-  set(ref(db, 'currentTurn'), group); // Set initial turn
 }
 window.submitGroupName = submitGroupName;
 
@@ -202,8 +201,14 @@ function sendQuestion() {
   });
   addMessage("📝 أرسلت سؤال: " + q);
   document.getElementById('questionInput').value = '';
-  switchTurn(); // Change turn after asking a question
+  questionCount++;
+  if (questionCount >= maxQuestions) {
+    endGame();
+  } else {
+    switchTurn();
+  }
 }
+window.sendQuestion = sendQuestion;
 
 function sendAnswer() {
   const a = document.getElementById('answerInput').value.trim();
@@ -220,12 +225,7 @@ function sendAnswer() {
   addMessage("✅ أرسلت إجابة: " + a);
   document.getElementById('answerInput').value = '';
   document.getElementById('answerSection').style.display = 'none';
-  questionCount++; // Increase question count after answering
-  if (questionCount >= maxQuestions) {
-    endGame();
-  } else {
-    switchTurn(); // Change turn after answering
-  }
+  switchTurn();
 }
 
 function addMessage(msg) {
