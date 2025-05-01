@@ -98,6 +98,8 @@
 <div id="game">
   <h2 id="welcomeText"></h2>
   
+  <h3 id="turnText"></h3>
+
   <div id="questionSection">
     <h3>📢 أرسل سؤالاً للمجموعة الأخرى</h3>
     <input type="text" id="questionInput" placeholder="اكتب سؤالك هنا">
@@ -145,8 +147,9 @@ const db = getDatabase(app);
 // Variables
 let group = "";
 let groupName = "";
+let turn = ""; // group1 OR group2
 let questionCount = 0;
-let maxQuestions = 5;
+let maxQuestions = 4; // Total questions before end
 
 function chooseGroup(g) {
   group = g;
@@ -171,11 +174,19 @@ function submitGroupName() {
 }
 window.submitGroupName = submitGroupName;
 
-function sendQuestion() {
-  if (questionCount >= maxQuestions) {
-    endGame();
-    return;
+function updateUIBasedOnTurn() {
+  const turnText = document.getElementById('turnText');
+  if (turn === group) {
+    turnText.innerText = "📢 دور مجموعتك لطرح سؤال";
+    document.getElementById('questionSection').style.display = 'block';
+    document.getElementById('answerSection').style.display = 'none';
+  } else {
+    turnText.innerText = "⏳ انتظر وصول سؤال من المجموعة الأخرى...";
+    document.getElementById('questionSection').style.display = 'none';
   }
+}
+
+function sendQuestion() {
   const q = document.getElementById('questionInput').value.trim();
   if (q === "") {
     alert("اكتب السؤال!");
@@ -183,14 +194,13 @@ function sendQuestion() {
   }
 
   const targetGroup = group === "group1" ? "group2" : "group1";
-  set(ref(db, targetGroup + '/currentQuestion'), {
-    from: groupName,
+  set(ref(db, 'currentQuestion'), {
+    fromGroup: group,
+    fromName: groupName,
     question: q
   });
   addMessage("📝 أرسلت سؤال: " + q);
   document.getElementById('questionInput').value = '';
-  document.getElementById('questionSection').style.display = 'none';
-  questionCount++;
 }
 window.sendQuestion = sendQuestion;
 
@@ -201,9 +211,9 @@ function sendAnswer() {
     return;
   }
 
-  const targetGroup = group === "group1" ? "group2" : "group1";
-  set(ref(db, targetGroup + '/currentAnswer'), {
-    from: groupName,
+  set(ref(db, 'currentAnswer'), {
+    fromGroup: group,
+    fromName: groupName,
     answer: a
   });
   addMessage("✅ أرسلت إجابة: " + a);
@@ -218,31 +228,51 @@ function addMessage(msg) {
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-function listenForUpdates() {
-  const targetGroup = group === "group1" ? "group2" : "group1";
+function switchTurn() {
+  turn = turn === "group1" ? "group2" : "group1";
+  set(ref(db, 'currentTurn'), turn);
+}
 
-  onValue(ref(db, group + '/currentQuestion'), (snapshot) => {
+function listenForUpdates() {
+  onValue(ref(db, 'currentTurn'), (snapshot) => {
+    const val = snapshot.val();
+    if (val) {
+      turn = val;
+      updateUIBasedOnTurn();
+    }
+  });
+
+  onValue(ref(db, 'currentQuestion'), (snapshot) => {
     const data = snapshot.val();
-    if (data) {
-      document.getElementById('receivedQuestion').innerText = data.question + " (من " + data.from + ")";
+    if (data && data.fromGroup !== group) {
+      document.getElementById('receivedQuestion').innerText = data.question + " (من " + data.fromName + ")";
       document.getElementById('answerSection').style.display = 'block';
       document.getElementById('questionSection').style.display = 'none';
       addMessage("📩 وصلك سؤال: " + data.question);
-      set(ref(db, group + '/currentQuestion'), null);
+      set(ref(db, 'currentQuestion'), null);
     }
   });
 
-  onValue(ref(db, group + '/currentAnswer'), (snapshot) => {
+  onValue(ref(db, 'currentAnswer'), (snapshot) => {
     const data = snapshot.val();
-    if (data) {
-      addMessage("💡 الإجابة التي وصلكت من " + data.from + ": " + data.answer);
-      document.getElementById('questionSection').style.display = 'block';
-      document.getElementById('answerSection').style.display = 'none';
-      set(ref(db, group + '/currentAnswer'), null);
+    if (data && data.fromGroup !== group) {
+      addMessage("💡 الإجابة من " + data.fromName + ": " + data.answer);
+      questionCount++;
+      if (questionCount >= maxQuestions) {
+        endGame();
+      } else {
+        switchTurn();
+      }
+      set(ref(db, 'currentAnswer'), null);
     }
   });
 
-  document.getElementById('questionSection').style.display = 'block';
+  // لأول مرة نحدد الدور (group1 يبدأ)
+  onValue(ref(db, 'currentTurn'), (snapshot) => {
+    if (!snapshot.exists()) {
+      set(ref(db, 'currentTurn'), 'group1');
+    }
+  });
 }
 
 function endGame() {
@@ -252,9 +282,11 @@ function endGame() {
 
 function restartGame() {
   // امسح بيانات اللعبة
-  remove(ref(db, group + '/currentQuestion'));
-  remove(ref(db, group + '/currentAnswer'));
-  remove(ref(db, group + '/name'));
+  remove(ref(db, 'currentQuestion'));
+  remove(ref(db, 'currentAnswer'));
+  remove(ref(db, 'currentTurn'));
+  remove(ref(db, 'group1/name'));
+  remove(ref(db, 'group2/name'));
 
   location.reload();
 }
