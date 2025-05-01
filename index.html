@@ -1,55 +1,45 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-<meta charset="UTF-8">
-<title>🎮 لعبة المجموعات</title>
-<style>
-  body {
-    font-family: 'Cairo', sans-serif;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: #fff;
-    text-align: center;
-    padding: 20px;
-  }
-  h1 {
-    font-size: 2.5em; margin-bottom: 10px; text-shadow: 2px 2px #333;
-  }
-  .card {
-    background: linear-gradient(135deg, #f6d365, #fda085);
-    color: #333; padding: 20px; border-radius: 15px;
-    margin: 10px; display: inline-block; width: 180px;
-    cursor: pointer; box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-    transition: transform 0.3s, box-shadow 0.3s;
-  }
-  .card:hover {
-    transform: scale(1.1);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.4);
-  }
-  input, button {
-    padding: 12px; border-radius: 8px; border: none;
-    margin-top: 10px; width: 80%; font-size: 1em;
-  }
-  button {
-    background: linear-gradient(135deg, #11998e, #38ef7d);
-    color: white; cursor: pointer; transition: background 0.3s;
-  }
-  button:hover {
-    background: linear-gradient(135deg, #38ef7d, #11998e);
-  }
-  #game, #questionSection, #answerSection, #endSection, #nameInput {
-    display: none;
-  }
-  #chat {
-    background: rgba(255,255,255,0.15); padding: 15px;
-    border-radius: 15px; margin-top: 20px;
-  }
-  #messages {
-    background: #fff; color: #333; padding: 10px;
-    border-radius: 10px; height: 150px; overflow:auto;
-    text-align: right;
-  }
-</style>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>🎮 لعبة المجموعات</title>
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 { font-size:2.5em; margin-bottom:10px; text-shadow:2px 2px #333; }
+    .card {
+      background: linear-gradient(135deg, #f6d365,#fda085);
+      color:#333; padding:20px; border-radius:15px;
+      margin:10px; display:inline-block; width:180px;
+      cursor:pointer; box-shadow:0 6px 12px rgba(0,0,0,0.3);
+      transition:transform .3s,box-shadow .3s;
+    }
+    .card:hover { transform:scale(1.1); box-shadow:0 8px 16px rgba(0,0,0,0.4); }
+    input,button {
+      padding:12px; border-radius:8px; border:none;
+      margin-top:10px; width:80%; font-size:1em;
+    }
+    button {
+      background: linear-gradient(135deg,#11998e,#38ef7d);
+      color:white; cursor:pointer; transition:background .3s;
+    }
+    button:hover { background: linear-gradient(135deg,#38ef7d,#11998e); }
+    #game,#questionSection,#answerSection,#endSection,#nameInput { display:none; }
+    #chat {
+      background:rgba(255,255,255,0.15); padding:15px;
+      border-radius:15px; margin-top:20px;
+    }
+    #messages {
+      background:#fff; color:#333; padding:10px;
+      border-radius:10px; height:150px; overflow:auto;
+      text-align:right;
+    }
+  </style>
 </head>
 <body onbeforeunload="clearDatabase()">
 
@@ -62,7 +52,7 @@
 
 <div id="nameInput">
   <h2>اكتب اسم مجموعتك</h2>
-  <input type="text" id="groupNameInput" placeholder="اسم المجموعة">
+  <input id="groupNameInput" placeholder="اسم المجموعة">
   <br>
   <button onclick="submitGroupName()">ابدأ</button>
 </div>
@@ -73,7 +63,7 @@
 
   <div id="questionSection">
     <h3>📢 أرسل سؤالاً للمجموعة الأخرى</h3>
-    <input type="text" id="questionInput" placeholder="اكتب سؤالك هنا">
+    <input id="questionInput" placeholder="اكتب سؤالك هنا">
     <br>
     <button onclick="sendQuestion()">إرسال السؤال</button>
   </div>
@@ -81,7 +71,7 @@
   <div id="answerSection">
     <h3>📥 السؤال الذي وصلك:</h3>
     <p id="receivedQuestion"></p>
-    <input type="text" id="answerInput" placeholder="اكتب إجابتك هنا">
+    <input id="answerInput" placeholder="اكتب إجابتك هنا">
     <br>
     <button onclick="sendAnswer()">إرسال الإجابة</button>
   </div>
@@ -93,142 +83,149 @@
 </div>
 
 <div id="endSection">
-  <h2>🎉 لقد أكملتم اللعبة!</h2>
+  <h2>🎉 لقد انتهت اللعبة!</h2>
   <button onclick="restartGame()">🔄 العودة للصفحة الرئيسية</button>
 </div>
 
 <script type="module">
-// إعداد Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.7/firebase-app.js";
 import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/9.6.7/firebase-database.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyACiOC6qd0OozfYUKeimW2O6BiH709h_aw",
-  authDomain: "jeu-groupes.firebaseapp.com",
-  databaseURL: "https://jeu-groupes-default-rtdb.firebaseio.com",
-  projectId: "jeu-groupes",
-  storageBucket: "jeu-groupes.firebasestorage.app",
-  messagingSenderId: "738368275764",
-  appId: "1:738368275764:web:f6f580335133cf22cc1161"
+const config = {
+  apiKey: "...", authDomain: "...", databaseURL: "https://jeu-groupes-default-rtdb.firebaseio.com",
+  projectId: "jeu-groupes", storageBucket: "...", messagingSenderId: "...", appId: "..."
 };
-
-initializeApp(firebaseConfig);
+initializeApp(config);
 const db = getDatabase();
 
-// متغيرات اللعبة
-let group = "";
-let groupName = "";
-let turn = "";
-let questionCount = 0;
-const maxQuestions = 2; // سؤالان فقط
+let group="", groupName="", turn="", questionCount=0;
+const maxQuestions = 5;
 
-// دوال اللعب
-function chooseGroup(g) {
-  group = g;
-  document.getElementById('selectGroup').style.display = 'none';
-  document.getElementById('nameInput').style.display = 'block';
+// اختيار المجموعة
+function chooseGroup(g){
+  group=g;
+  document.getElementById('selectGroup').style.display='none';
+  document.getElementById('nameInput').style.display='block';
 }
-function submitGroupName() {
-  groupName = document.getElementById('groupNameInput').value.trim();
-  if (!groupName) { alert("اكتب اسم المجموعة!"); return; }
-  document.getElementById('nameInput').style.display = 'none';
-  document.getElementById('game').style.display = 'block';
+
+// بدء اللعبة بعد إدخال الاسم
+function submitGroupName(){
+  const input = document.getElementById('groupNameInput').value.trim();
+  if(!input){ alert("اكتب اسم المجموعة!"); return; }
+  groupName=input;
+  document.getElementById('nameInput').style.display='none';
+  document.getElementById('game').style.display='block';
   document.getElementById('welcomeText').innerText = "مرحباً " + groupName;
-  set(ref(db, group + '/name'), groupName);
-  // البدء بالدور الأول
-  onValue(ref(db, 'currentTurn'), snap => {
-    if (!snap.exists()) set(ref(db, 'currentTurn'), 'group1');
+
+  set(ref(db, group+'/name'), groupName);
+
+  // تحديد الدور الأول إذا لم يكن موجوداً
+  onValue(ref(db,'currentTurn'), snap=>{
+    if(!snap.exists()) set(ref(db,'currentTurn'),'group1');
   });
   listenForUpdates();
 }
-function sendQuestion() {
-  const q = document.getElementById('questionInput').value.trim();
-  if (!q) { alert("اكتب السؤال!"); return; }
-  set(ref(db, 'currentQuestion'), {
-    fromGroup: group,
-    fromName: groupName,
-    question: q
-  });
-  addMessage("📝 أرسلت سؤال: " + q);
-}
-function sendAnswer() {
-  const a = document.getElementById('answerInput').value.trim();
-  if (!a) { alert("اكتب الإجابة!"); return; }
-  set(ref(db, 'currentAnswer'), {
-    fromGroup: group,
-    fromName: groupName,
-    answer: a
-  });
-  addMessage("✅ أرسلت إجابة: " + a);
-  document.getElementById('answerSection').style.display = 'none';
-}
-function addMessage(msg) {
-  const m = document.createElement('div');
-  m.textContent = "➤ " + msg;
-  document.getElementById('messages').append(m);
-  document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
-}
-function switchTurn() {
-  questionCount++;
-  if (questionCount >= maxQuestions) {
-    endGame();
+
+// عرض/إخفاء الواجهة حسب الدور
+function updateUI(){
+  const t = document.getElementById('turnText');
+  if(turn===group){
+    t.innerText="📢 دورك لطرح سؤال";
+    document.getElementById('questionSection').style.display='block';
+    document.getElementById('answerSection').style.display='none';
   } else {
-    turn = (turn === 'group1') ? 'group2' : 'group1';
-    set(ref(db, 'currentTurn'), turn);
+    t.innerText="⏳ انتظر وصول سؤال من المجموعة الأخرى";
+    document.getElementById('questionSection').style.display='none';
   }
 }
-function updateUIBasedOnTurn() {
-  document.getElementById('turnText').innerText =
-    (turn === group)
-      ? "📢 دورك لطرح سؤال"
-      : "⏳ انتظر سؤال المجموعة الأخرى";
-  document.getElementById('questionSection').style.display = (turn === group ? 'block' : 'none');
+
+// إرسال السؤال
+function sendQuestion(){
+  const q = document.getElementById('questionInput').value.trim();
+  if(!q){ alert("اكتب السؤال!"); return; }
+  set(ref(db,'currentQuestion'),{fromGroup:group,fromName:groupName,question:q});
+  addMessage("📝 أرسلت سؤال: "+q);
+  document.getElementById('questionInput').value='';
 }
-function listenForUpdates() {
-  onValue(ref(db, 'currentTurn'), snap => {
-    turn = snap.val();
-    updateUIBasedOnTurn();
+
+// إرسال الإجابة
+function sendAnswer(){
+  const a = document.getElementById('answerInput').value.trim();
+  if(!a){ alert("اكتب الإجابة!"); return; }
+  set(ref(db,'currentAnswer'),{fromGroup:group,fromName:groupName,answer:a});
+  addMessage("✅ أرسلت إجابة: "+a);
+  document.getElementById('answerSection').style.display='none';
+  // بعد كل إجابة نزيد العداد ونبدل الدور
+  questionCount++;
+  if(questionCount>=maxQuestions) endGame();
+  else switchTurn();
+}
+
+// تبديل الدور
+function switchTurn(){
+  turn = (turn==='group1')?'group2':'group1';
+  set(ref(db,'currentTurn'), turn);
+}
+
+// إضافة رسالة في الشات
+function addMessage(msg){
+  const div=document.createElement('div');
+  div.textContent="➤ "+msg;
+  const chat=document.getElementById('messages');
+  chat.append(div);
+  chat.scrollTop=chat.scrollHeight;
+}
+
+// الاستماع للتحديثات من Firebase
+function listenForUpdates(){
+  onValue(ref(db,'currentTurn'),snap=>{
+    turn=snap.val(); updateUI();
   });
-  onValue(ref(db, 'currentQuestion'), snap => {
-    const d = snap.val();
-    if (d && d.fromGroup !== group) {
-      document.getElementById('receivedQuestion').innerText = d.question + " (من " + d.fromName + ")";
-      document.getElementById('answerSection').style.display = 'block';
-      document.getElementById('questionSection').style.display = 'none';
-      switchTurn();
-      set(ref(db, 'currentQuestion'), null);
+  onValue(ref(db,'currentQuestion'),snap=>{
+    const d=snap.val();
+    if(d && d.fromGroup!==group){
+      document.getElementById('receivedQuestion').innerText=d.question+" (من "+d.fromName+")";
+      document.getElementById('answerSection').style.display='block';
+      document.getElementById('questionSection').style.display='none';
+      set(ref(db,'currentQuestion'),null);
     }
   });
-  onValue(ref(db, 'currentAnswer'), snap => {
-    const d = snap.val();
-    if (d && d.fromGroup !== group) {
-      addMessage("📥 الإجابة: " + d.answer + " (من " + d.fromName + ")");
-      set(ref(db, 'currentAnswer'), null);
+  onValue(ref(db,'currentAnswer'),snap=>{
+    const d=snap.val();
+    if(d && d.fromGroup!==group){
+      addMessage("📥 الإجابة: "+d.answer+" (من "+d.fromName+")");
+      set(ref(db,'currentAnswer'),null);
     }
   });
 }
-function endGame() {
+
+// إنهاء اللعبة
+function endGame(){
   clearDatabase();
-  document.getElementById('game').style.display = 'none';
-  document.getElementById('endSection').style.display = 'block';
+  document.getElementById('game').style.display='none';
+  document.getElementById('endSection').style.display='block';
 }
-function clearDatabase() {
-  remove(ref(db, 'currentTurn'));
-  remove(ref(db, 'currentQuestion'));
-  remove(ref(db, 'currentAnswer'));
-  remove(ref(db, 'group1'));
-  remove(ref(db, 'group2'));
+
+// مسح بيانات اللعبة
+function clearDatabase(){
+  remove(ref(db,'currentTurn'));
+  remove(ref(db,'currentQuestion'));
+  remove(ref(db,'currentAnswer'));
+  remove(ref(db,'group1'));
+  remove(ref(db,'group2'));
 }
-function restartGame() {
+
+// إعادة تشغيل
+function restartGame(){
   window.location.reload();
 }
 
-// تعيين الدوال للعالمية
-window.chooseGroup = chooseGroup;
-window.submitGroupName = submitGroupName;
-window.sendQuestion = sendQuestion;
-window.sendAnswer = sendAnswer;
-window.restartGame = restartGame;
+// ربط الدوال بالواجهة
+window.chooseGroup=chooseGroup;
+window.submitGroupName=submitGroupName;
+window.sendQuestion=sendQuestion;
+window.sendAnswer=sendAnswer;
+window.restartGame=restartGame;
 
 </script>
 </body>
