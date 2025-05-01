@@ -201,6 +201,12 @@ function sendQuestion() {
   });
   addMessage("📝 أرسلت سؤال: " + q);
   document.getElementById('questionInput').value = '';
+  questionCount++;  // زيادة عدد الأسئلة
+  if (questionCount >= maxQuestions) {
+    endGame();
+  } else {
+    switchTurn(); // التبديل بين المجموعات
+  }
 }
 window.sendQuestion = sendQuestion;
 
@@ -219,6 +225,7 @@ function sendAnswer() {
   addMessage("✅ أرسلت إجابة: " + a);
   document.getElementById('answerInput').value = '';
   document.getElementById('answerSection').style.display = 'none';
+  switchTurn(); // التبديل بين المجموعات
 }
 window.sendAnswer = sendAnswer;
 
@@ -257,6 +264,11 @@ function listenForUpdates() {
       addMessage("📥 الإجابة التي وصلت: " + data.answer + " من " + data.fromName);
     }
   });
+}
+
+function endGame() {
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('endSection').style.display = 'block';
 }
 
 // وظيفة لحذف البيانات عند التحديث أو نهاية اللعبة
