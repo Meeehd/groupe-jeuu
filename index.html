@@ -1,212 +1,243 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <title>لعبة المجموعات</title>
-    <style>
-        body {
-            font-family: 'Cairo', sans-serif;
-            text-align: center;
-            background: linear-gradient(135deg, #74ebd5, #acb6e5);
-            color: #333;
-            margin: 0;
-            padding: 0;
-        }
-        h1, h2, h3 {
-            color: #2c3e50;
-        }
-        .container {
-            margin: 40px auto;
-            max-width: 600px;
-            padding: 30px;
-            background-color: #ffffffdd;
-            border-radius: 15px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-        }
-        button {
-            padding: 12px 25px;
-            font-size: 18px;
-            border: none;
-            border-radius: 8px;
-            background-color: #3498db;
-            color: white;
-            margin: 10px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        button:hover {
-            background-color: #2980b9;
-        }
-        input, textarea {
-            padding: 10px;
-            width: 80%;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            margin-top: 10px;
-            font-size: 16px;
-        }
-        .hidden { display: none; }
-        .group-card {
-            display: inline-block;
-            width: 40%;
-            padding: 30px;
-            margin: 15px;
-            border-radius: 10px;
-            background-color: #f1c40f;
-            color: #2c3e50;
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            transition: 0.3s;
-        }
-        .group-card:hover {
-            transform: scale(1.05);
-            background-color: #f39c12;
-        }
-        #questionDisplay, #answerDisplay {
-            margin: 20px;
-            padding: 15px;
-            background-color: #ecf0f1;
-            border-radius: 10px;
-            font-size: 18px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>لعبة المجموعات</title>
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: linear-gradient(135deg, #74ebd5, #acb6e5);
+      color: #333;
+      text-align: center;
+      padding: 30px;
+    }
+
+    h1, h2, h3 {
+      color: #2c3e50;
+    }
+
+    .card {
+      background-color: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      padding: 30px;
+      margin: 20px auto;
+      width: 250px;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+      background-color: #f0f8ff;
+    }
+
+    button {
+      background-color: #2980b9;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 8px;
+      font-size: 16px;
+      margin-top: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #1c5980;
+    }
+
+    input, textarea {
+      padding: 10px;
+      width: 80%;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .group-name {
+      font-size: 22px;
+      margin: 15px 0;
+      color: #16a085;
+    }
+
+    .question-box, .answer-box {
+      background: #ffffff;
+      border-radius: 15px;
+      padding: 20px;
+      margin-top: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+  </style>
 </head>
+
 <body>
 
-<div id="groupSelection" class="container">
-    <h1>اختر مجموعتك</h1>
-    <div class="group-card" onclick="selectGroup('المجموعة الأولى')">المجموعة الأولى</div>
-    <div class="group-card" onclick="selectGroup('المجموعة الثانية')">المجموعة الثانية</div>
-</div>
+  <h1>🎮 لعبة الأسئلة بين المجموعتين</h1>
 
-<div id="nameInputSection" class="container hidden">
-    <h2 id="selectedGroupTitle"></h2>
-    <input type="text" id="groupNameInput" placeholder="أدخل اسم مجموعتك">
+  <div id="selectGroup">
+    <h2>اختر مجموعتك</h2>
+    <div class="card" onclick="chooseGroup('group1')">المجموعة الأولى</div>
+    <div class="card" onclick="chooseGroup('group2')">المجموعة الثانية</div>
+  </div>
+
+  <div id="nameInputSection" class="hidden">
+    <h2 id="selectedGroupText"></h2>
+    <input type="text" id="groupNameInput" placeholder="اكتب اسم مجموعتك">
     <br>
-    <button onclick="saveGroupName()">تأكيد</button>
-</div>
+    <button onclick="submitGroupName()">تأكيد الاسم</button>
+  </div>
 
-<div id="gameSection" class="container hidden">
-    <h2 id="groupsDisplay"></h2>
+  <div id="gameSection" class="hidden">
+    <h2>👥 المواجهة</h2>
+    <div class="group-name" id="groupsDisplay"></div>
 
-    <div id="questionSection">
-        <h3>✍️ اطرح سؤالا للمجموعة الأخرى</h3>
-        <textarea id="questionInput" rows="3" placeholder="اكتب سؤالك هنا..."></textarea><br>
-        <button onclick="sendQuestion()">أرسل السؤال</button>
+    <div id="questionSection" class="question-box hidden">
+      <h3>✍️ اكتب سؤالاً للمجموعة الأخرى</h3>
+      <textarea id="questionInput" rows="3" placeholder="اكتب سؤالك هنا..."></textarea><br>
+      <button onclick="sendQuestion()">📤 أرسل السؤال</button>
     </div>
 
-    <div id="answerSection" class="hidden">
-        <h3>📢 السؤال المستلم:</h3>
-        <div id="questionDisplay"></div>
-        <textarea id="answerInput" rows="2" placeholder="اكتب إجابتك هنا..."></textarea><br>
-        <button onclick="sendAnswer()">أرسل الجواب</button>
+    <div id="answerSection" class="answer-box hidden">
+      <h3>📥 السؤال الذي وصلك:</h3>
+      <div id="receivedQuestion" style="font-weight: bold; margin: 10px 0;"></div>
+      <textarea id="answerInput" rows="2" placeholder="اكتب إجابتك هنا..."></textarea><br>
+      <button onclick="sendAnswer()">📤 أرسل الجواب</button>
     </div>
 
-    <div id="answerDisplaySection" class="hidden">
-        <h3>📨 الإجابة المستلمة:</h3>
-        <div id="answerDisplay"></div>
+    <div id="receivedAnswerSection" class="answer-box hidden">
+      <h3>✅ جواب المجموعة الأخرى:</h3>
+      <div id="receivedAnswer" style="font-weight: bold; margin: 10px 0;"></div>
+      <button onclick="nextTurn()">🔄 دور جديد</button>
     </div>
-</div>
+
+  </div>
 
 <script type="module">
-// Firebase imports
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js";
+import { getDatabase, ref, set, get, onValue, remove } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
 
 // Firebase config
 const firebaseConfig = {
-    apiKey: "AIzaSyACiOC6qd0OozfYUKeimW2O6BiH709h_aw",
-    authDomain: "jeu-groupes.firebaseapp.com",
-    databaseURL: "https://jeu-groupes-default-rtdb.firebaseio.com",
-    projectId: "jeu-groupes",
-    storageBucket: "jeu-groupes.firebasestorage.app",
-    messagingSenderId: "738368275764",
-    appId: "1:738368275764:web:f6f580335133cf22cc1161"
+  apiKey: "AIzaSyACiOC6qd0OozfYUKeimW2O6BiH709h_aw",
+  authDomain: "jeu-groupes.firebaseapp.com",
+  databaseURL: "https://jeu-groupes-default-rtdb.firebaseio.com",
+  projectId: "jeu-groupes",
+  storageBucket: "jeu-groupes.firebasestorage.app",
+  messagingSenderId: "738368275764",
+  appId: "1:738368275764:web:f6f580335133cf22cc1161"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-let selectedGroup = "";
-let group1Name = "";
-let group2Name = "";
+let myGroup = "";
+let otherGroup = "";
+let myGroupName = "";
+let otherGroupName = "";
 
-function selectGroup(group) {
-    selectedGroup = group;
-    document.getElementById('groupSelection').classList.add('hidden');
-    document.getElementById('nameInputSection').classList.remove('hidden');
-    document.getElementById('selectedGroupTitle').innerText = `أنت اخترت: ${group}`;
+function chooseGroup(group) {
+  myGroup = group;
+  otherGroup = (group === 'group1') ? 'group2' : 'group1';
+  document.getElementById('selectGroup').classList.add('hidden');
+  document.getElementById('nameInputSection').classList.remove('hidden');
+  document.getElementById('selectedGroupText').innerText = (group === 'group1') ? "🟥 اخترت المجموعة الأولى" : "🟦 اخترت المجموعة الثانية";
 }
 
-function saveGroupName() {
-    const name = document.getElementById('groupNameInput').value.trim();
-    if (!name) { alert("أدخل اسم المجموعة"); return; }
+window.chooseGroup = chooseGroup;
 
-    if (selectedGroup === "المجموعة الأولى") {
-        set(ref(db, 'groups/group1'), { name: name });
-        group1Name = name;
-    } else {
-        set(ref(db, 'groups/group2'), { name: name });
-        group2Name = name;
+function submitGroupName() {
+  const name = document.getElementById('groupNameInput').value.trim();
+  if (name.length < 1) { alert("اكتب اسم المجموعة!"); return; }
+
+  myGroupName = name;
+  set(ref(db, 'groups/' + myGroup), { name: name });
+  listenToOtherGroupName();
+  document.getElementById('nameInputSection').classList.add('hidden');
+  document.getElementById('gameSection').classList.remove('hidden');
+}
+
+window.submitGroupName = submitGroupName;
+
+function listenToOtherGroupName() {
+  const otherGroupRef = ref(db, 'groups/' + otherGroup);
+  onValue(otherGroupRef, (snapshot) => {
+    if (snapshot.exists()) {
+      otherGroupName = snapshot.val().name;
+      updateGroupDisplay();
     }
-
-    document.getElementById('nameInputSection').classList.add('hidden');
-    document.getElementById('gameSection').classList.remove('hidden');
-    listenForGroups();
-    listenForQuestion();
-    listenForAnswer();
+  });
 }
 
-function listenForGroups() {
-    onValue(ref(db, 'groups'), (snapshot) => {
-        const groups = snapshot.val();
-        if (groups) {
-            group1Name = groups.group1?.name || "";
-            group2Name = groups.group2?.name || "";
-            document.getElementById('groupsDisplay').innerText = `${group1Name} 🆚 ${group2Name}`;
-        }
-    });
+function updateGroupDisplay() {
+  let text = `${myGroupName} 🆚 ${otherGroupName}`;
+  document.getElementById('groupsDisplay').innerText = text;
+  showQuestionSection();
+}
+
+function showQuestionSection() {
+  document.getElementById('questionSection').classList.remove('hidden');
+  document.getElementById('answerSection').classList.add('hidden');
+  document.getElementById('receivedAnswerSection').classList.add('hidden');
 }
 
 function sendQuestion() {
-    const question = document.getElementById('questionInput').value.trim();
-    if (!question) { alert("اكتب السؤال"); return; }
+  const question = document.getElementById('questionInput').value.trim();
+  if (question.length < 1) { alert("اكتب سؤالك!"); return; }
 
-    set(ref(db, 'questions'), { from: selectedGroup, question: question });
-    document.getElementById('questionInput').value = "";
-    document.getElementById('questionSection').classList.add('hidden');
+  set(ref(db, 'questions/' + otherGroup), { question: question });
+  document.getElementById('questionInput').value = "";
+  document.getElementById('questionSection').classList.add('hidden');
 }
 
-function listenForQuestion() {
-    onValue(ref(db, 'questions'), (snapshot) => {
-        const data = snapshot.val();
-        if (data && data.from !== selectedGroup) {
-            document.getElementById('questionDisplay').innerText = data.question;
-            document.getElementById('answerSection').classList.remove('hidden');
-        }
-    });
-}
+window.sendQuestion = sendQuestion;
+
+const myQuestionRef = ref(db, 'questions/' + myGroup);
+onValue(myQuestionRef, (snapshot) => {
+  if (snapshot.exists()) {
+    const q = snapshot.val().question;
+    document.getElementById('receivedQuestion').innerText = q;
+    document.getElementById('answerSection').classList.remove('hidden');
+  }
+});
 
 function sendAnswer() {
-    const answer = document.getElementById('answerInput').value.trim();
-    if (!answer) { alert("اكتب الإجابة"); return; }
+  const answer = document.getElementById('answerInput').value.trim();
+  if (answer.length < 1) { alert("اكتب إجابتك!"); return; }
 
-    set(ref(db, 'answers'), { from: selectedGroup, answer: answer });
-    document.getElementById('answerInput').value = "";
-    document.getElementById('answerSection').classList.add('hidden');
+  set(ref(db, 'answers/' + otherGroup), { answer: answer });
+  document.getElementById('answerInput').value = "";
+  document.getElementById('answerSection').classList.add('hidden');
 }
 
-function listenForAnswer() {
-    onValue(ref(db, 'answers'), (snapshot) => {
-        const data = snapshot.val();
-        if (data && data.from !== selectedGroup) {
-            document.getElementById('answerDisplay').innerText = data.answer;
-            document.getElementById('answerDisplaySection').classList.remove('hidden');
-            document.getElementById('questionSection').classList.remove('hidden');
-        }
-    });
+window.sendAnswer = sendAnswer;
+
+const myAnswerRef = ref(db, 'answers/' + myGroup);
+onValue(myAnswerRef, (snapshot) => {
+  if (snapshot.exists()) {
+    const a = snapshot.val().answer;
+    document.getElementById('receivedAnswer').innerText = a;
+    document.getElementById('receivedAnswerSection').classList.remove('hidden');
+  }
+});
+
+function nextTurn() {
+  // Clear Firebase data to restart turn
+  remove(ref(db, 'questions/' + myGroup));
+  remove(ref(db, 'answers/' + myGroup));
+  remove(ref(db, 'questions/' + otherGroup));
+  remove(ref(db, 'answers/' + otherGroup));
+  showQuestionSection();
 }
+
+window.nextTurn = nextTurn;
 </script>
 
 </body>
