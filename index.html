@@ -171,6 +171,7 @@ function submitGroupName() {
   set(ref(db, group + '/name'), groupName);
 
   listenForUpdates();
+  set(ref(db, 'currentTurn'), group); // Set initial turn
 }
 window.submitGroupName = submitGroupName;
 
@@ -201,8 +202,8 @@ function sendQuestion() {
   });
   addMessage("📝 أرسلت سؤال: " + q);
   document.getElementById('questionInput').value = '';
+  switchTurn(); // Change turn after asking a question
 }
-window.sendQuestion = sendQuestion;
 
 function sendAnswer() {
   const a = document.getElementById('answerInput').value.trim();
@@ -219,8 +220,13 @@ function sendAnswer() {
   addMessage("✅ أرسلت إجابة: " + a);
   document.getElementById('answerInput').value = '';
   document.getElementById('answerSection').style.display = 'none';
+  questionCount++; // Increase question count after answering
+  if (questionCount >= maxQuestions) {
+    endGame();
+  } else {
+    switchTurn(); // Change turn after answering
+  }
 }
-window.sendAnswer = sendAnswer;
 
 function addMessage(msg) {
   const messagesDiv = document.getElementById('messages');
@@ -231,6 +237,11 @@ function addMessage(msg) {
 function switchTurn() {
   turn = turn === "group1" ? "group2" : "group1";
   set(ref(db, 'currentTurn'), turn);
+}
+
+function endGame() {
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('endSection').style.display = 'block';
 }
 
 function listenForUpdates() {
