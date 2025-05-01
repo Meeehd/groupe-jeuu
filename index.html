@@ -129,7 +129,6 @@ function submitGroupName() {
   document.getElementById('game').style.display = 'block';
   document.getElementById('welcomeText').innerText = "مرحباً " + groupName;
   set(ref(db, group + '/name'), groupName);
-  // تحديد الدور الأول إذا لم يكن موجوداً
   onValue(ref(db, 'currentTurn'), snap => {
     if (!snap.exists()) set(ref(db, 'currentTurn'), 'group1');
   });
@@ -161,7 +160,7 @@ function sendQuestion() {
 }
 window.sendQuestion = sendQuestion;
 
-// إرسال الإجابة وزيادة العداد وتبديل الدور
+// إرسال الإجابة وزيادة العداد أو إنهاء اللعبة
 function sendAnswer() {
   const a = document.getElementById('answerInput').value.trim();
   if (!a) { alert("اكتب الإجابة!"); return; }
@@ -174,8 +173,12 @@ function sendAnswer() {
   document.getElementById('answerInput').value = '';
   document.getElementById('answerSection').style.display = 'none';
   questionCount++;
-  if (questionCount >= maxQuestions) endGame();
-  else switchTurn();
+  if (questionCount >= maxQuestions) {
+    // نرسل علامة انتهاء اللعبة
+    set(ref(db, 'gameEnded'), true);
+  } else {
+    switchTurn();
+  }
 }
 window.sendAnswer = sendAnswer;
 
@@ -196,10 +199,12 @@ function addMessage(msg) {
 
 // الاستماع للتحديثات من Firebase
 function listenForUpdates() {
+  // دور اللعب
   onValue(ref(db, 'currentTurn'), snap => {
     turn = snap.val();
     updateUI();
   });
+  // سؤال وارد
   onValue(ref(db, 'currentQuestion'), snap => {
     const d = snap.val();
     if (d && d.fromGroup !== group) {
@@ -209,6 +214,7 @@ function listenForUpdates() {
       set(ref(db, 'currentQuestion'), null);
     }
   });
+  // إجابة واردة
   onValue(ref(db, 'currentAnswer'), snap => {
     const d = snap.val();
     if (d && d.fromGroup !== group) {
@@ -216,9 +222,13 @@ function listenForUpdates() {
       set(ref(db, 'currentAnswer'), null);
     }
   });
+  // إنهاء اللعبة مشترك
+  onValue(ref(db, 'gameEnded'), snap => {
+    if (snap.val() === true) endGame();
+  });
 }
 
-// إنهاء اللعبة وعرض النهاية
+// إنهاء اللعبة وعرض النهاية لكليهما
 function endGame() {
   clearDatabase();
   document.getElementById('game').style.display = 'none';
@@ -226,11 +236,12 @@ function endGame() {
 }
 window.endGame = endGame;
 
-// مسح بيانات Firebase
+// مسح بيانات اللعبة
 function clearDatabase() {
   remove(ref(db, 'currentTurn'));
   remove(ref(db, 'currentQuestion'));
   remove(ref(db, 'currentAnswer'));
+  remove(ref(db, 'gameEnded'));
   remove(ref(db, 'group1'));
   remove(ref(db, 'group2'));
 }
