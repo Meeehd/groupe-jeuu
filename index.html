@@ -2,16 +2,94 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>لعبة المجموعات التفاعلية</title>
+<title>🎮 لعبة المجموعات التفاعلية</title>
 <style>
-body { font-family: Arial; text-align: center; background: #f2f2f2; }
-h1 { color: #333; }
-button { padding: 15px 30px; margin: 10px; font-size: 16px; cursor: pointer; }
-.hidden { display: none; }
-.card { display: inline-block; background: white; border: 2px solid #ccc; border-radius: 8px; padding: 20px; margin: 10px; width: 150px; }
-input { padding: 10px; width: 60%; margin: 10px; }
-#timer { font-weight: bold; margin-top: 10px; color: red; }
+body {
+  font-family: 'Tajawal', sans-serif;
+  background: linear-gradient(to right, #2193b0, #6dd5ed);
+  color: #fff;
+  text-align: center;
+  padding: 20px;
+}
+
+h1 {
+  font-size: 2.5em;
+  margin-bottom: 20px;
+}
+
+.card {
+  display: inline-block;
+  background: #ffffff;
+  color: #333;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  padding: 20px;
+  margin: 15px;
+  width: 180px;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
+
+button {
+  padding: 12px 24px;
+  background-color: #ff9800;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s;
+  margin-top: 10px;
+}
+
+button:hover {
+  background-color: #f57c00;
+}
+
+input {
+  padding: 12px;
+  width: 70%;
+  border-radius: 8px;
+  border: none;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.hidden {
+  display: none;
+}
+
+#groupsDisplay {
+  font-size: 1.5em;
+  margin: 20px 0;
+}
+
+#turnInfo {
+  font-size: 1.3em;
+  margin-bottom: 15px;
+}
+
+#questionSection, #answerSection {
+  background: rgba(255,255,255,0.9);
+  color: #333;
+  padding: 20px;
+  border-radius: 15px;
+  margin: 20px auto;
+  width: 80%;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+label {
+  font-weight: bold;
+}
 </style>
+
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+
 </head>
 <body>
 
@@ -19,11 +97,11 @@ input { padding: 10px; width: 60%; margin: 10px; }
 
 <section id="selectGroupSection">
     <div class="card">
-        <h2>المجموعة الأولى</h2>
+        <h2>🟢 المجموعة الأولى</h2>
         <button onclick="selectGroup('group1')">اختيار</button>
     </div>
     <div class="card">
-        <h2>المجموعة الثانية</h2>
+        <h2>🔵 المجموعة الثانية</h2>
         <button onclick="selectGroup('group2')">اختيار</button>
     </div>
 </section>
@@ -39,17 +117,17 @@ input { padding: 10px; width: 60%; margin: 10px; }
     <h3 id="turnInfo"></h3>
 
     <div id="questionSection" class="hidden">
-        <input type="text" id="questionInput" placeholder="❓ اكتب سؤالك"><br>
+        <label>❓ اكتب سؤالك:</label><br>
+        <input type="text" id="questionInput" placeholder="اكتب سؤالك هنا"><br>
         <button onclick="sendQuestion()">إرسال السؤال</button>
     </div>
 
     <div id="answerSection" class="hidden">
         <h3 id="receivedQuestion"></h3>
-        <input type="text" id="answerInput" placeholder="✏️ اكتب الإجابة"><br>
+        <label>✏️ اكتب الإجابة:</label><br>
+        <input type="text" id="answerInput" placeholder="اكتب الإجابة هنا"><br>
         <button onclick="sendAnswer()">إرسال الإجابة</button>
     </div>
-
-    <p id="timer"></p>
 </section>
 
 <!-- Firebase Scripts -->
@@ -73,8 +151,6 @@ let groupName = "";
 let opponentGroup = "";
 let currentTurn = 1;
 let groups = { group1: { name: "", score: 0 }, group2: { name: "", score: 0 } };
-let timer;
-let timeLeft = 30;
 
 function selectGroup(group) {
     selectedGroup = group;
@@ -118,7 +194,6 @@ function showTurn() {
         document.getElementById('turnInfo').innerText = "🚀 دورك لطرح سؤال";
         document.getElementById('questionSection').classList.remove('hidden');
         document.getElementById('answerSection').classList.add('hidden');
-        startTimer();
     } else {
         document.getElementById('turnInfo').innerText = "⏳ انتظر سؤال المجموعة الأخرى";
         document.getElementById('questionSection').classList.add('hidden');
@@ -132,7 +207,6 @@ function sendQuestion() {
 
     db.ref('questions').set({ from: selectedGroup, question: question });
     document.getElementById('questionInput').value = "";
-    clearInterval(timer);
 }
 
 function listenForQuestion() {
@@ -142,7 +216,6 @@ function listenForQuestion() {
         if (data && data.from !== selectedGroup) {
             document.getElementById('receivedQuestion').innerText = `📢 السؤال: ${data.question}`;
             document.getElementById('answerSection').classList.remove('hidden');
-            startTimer();
         }
     });
 }
@@ -162,23 +235,7 @@ function sendAnswer() {
 
     document.getElementById('answerInput').value = "";
     currentTurn++;
-    clearInterval(timer);
     showTurn();
-}
-
-function startTimer() {
-    timeLeft = 30;
-    document.getElementById('timer').innerText = `⏱️ الوقت المتبقي: ${timeLeft} ثانية`;
-    timer = setInterval(() => {
-        timeLeft--;
-        document.getElementById('timer').innerText = `⏱️ الوقت المتبقي: ${timeLeft} ثانية`;
-        if (timeLeft <= 0) {
-            clearInterval(timer);
-            alert("انتهى الوقت!");
-            currentTurn++;
-            showTurn();
-        }
-    }, 1000);
 }
 </script>
 
